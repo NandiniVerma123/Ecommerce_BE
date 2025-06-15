@@ -1,4 +1,8 @@
-const express = require('express')
+const express = require('express');
+const connectDB = require('./src/database/db');
+const dotenv = require('dotenv');
+const multer = require('multer');
+
 const app = express()
 const port = 3000
 
