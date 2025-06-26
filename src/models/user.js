@@ -1,59 +1,66 @@
 const mongoose = require("mongoose");
 
-const addressSchema = new mongoose.Schema({
-  street: String,
-  city: String,
-  state: String,
-  postalCode: String,
-  country: String,
-});
-
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    maxlength: 100,
+    trim: true
   },
-
   email: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
-    trim: true,
+    trim: true
   },
-
-  password: {
+  phone: {
     type: String,
     required: true,
-    minlength: 6,
+    unique: true,
+    trim: true
   },
-
+  password: {
+    type: String,
+    required: true
+  },
+  address: {
+    type: String,
+    required: true
+  },
   role: {
     type: String,
     enum: ["customer", "admin", "vendor"],
-    default: "customer",
+    default: "customer"
   },
-
-  phone: {
+  city: {
     type: String,
+    required: true
   },
-
-  addresses: [addressSchema], // Optional: Add support for multiple addresses
-
+  street: {
+    type: String,
+    required: true
+  },
+  postalCode: {
+    type: String,
+    required: true
+  },
+  country: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ["activate", "deactivate"],
+    default: "activate"
+  },
   wishlist: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-    },
-  ],
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+      ref: "Product"
+    }
+  ]
+}, {
+  timestamps: true
 });
 
-const User = mongoose.model("User", userSchema);
-
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);
