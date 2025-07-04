@@ -52,7 +52,51 @@ const userExists = async (emailOrPhone) => {
   return !!user;
 };
 
+// 3. Send Password Reset Email
+const sendPasswordResetEmail = async (receiverEmail, resetLink) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PW,
+    },
+  });
+
+  const mailOptions = {
+    from: {
+      name: "E-Commerce Support",
+      address: process.env.EMAIL_USER,
+    },
+    to: receiverEmail,
+    subject: "Password Reset Request",
+    text: `You requested a password reset.\n\nClick the link below to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Password Reset Request</h2>
+        <p>You requested a password reset.</p>
+        <p>
+          <a href="${resetLink}" style="color: #1976d2;">Reset your password</a>
+        </p>
+        <p>If you did not request this, please ignore this email.</p>
+        <br/>
+        <p>Best Regards,<br>The E-Commerce Team</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Password reset email sent to:", receiverEmail);
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+  }
+};
+
 module.exports = {
   sendWelcomeEmail,
-  userExists
+  userExists,
+  sendPasswordResetEmail
 }

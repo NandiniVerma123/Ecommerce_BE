@@ -1,4 +1,4 @@
-const { userExists, sendWelcomeEmail } = require('../../utils/helperFunc.js');
+const { userExists, sendWelcomeEmail, sendPasswordResetEmail } = require('../../utils/helperFunc.js');
 require("dotenv").config();
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
@@ -110,14 +110,16 @@ const forgotPassword = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Generate a short-lived reset token
     const resetToken = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
 
+    // Send a password reset link to the user's email
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    await sendWelcomeEmail(email, "Password Reset", `Reset your password: ${resetLink}`);
+    await sendPasswordResetEmail(email, resetLink);
 
     res.status(200).json({ message: "Password reset link sent to email" });
   } catch (err) {
@@ -128,23 +130,31 @@ const forgotPassword = async (req, res) => {
 // Reset Password
 const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+  const { userId, newPassword, resetToken } = req.body;
 
+    // Check if token is blacklisted
     if (isTokenBlacklisted(token)) {
       return res.status(400).json({ message: "Token has been invalidated" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
+    // Verify the reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
 
+    const user = await User.findById(decoded.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Update the user's password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.status(200).json({ message: "Password reset successful" });
   } catch (err) {
-    res.status(400).json({ message: "Invalid or expired token" });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -155,3 +165,30 @@ module.exports = {
   forgotPassword,
   resetPassword
 };
+
+// To use the **forgot password** and **reset password** APIs in Postman, set the Body to **raw** and **JSON**.
+
+// **Forgot Password Example:**
+/*
+- Method: POST
+- URL: http://localhost:3000/auth/forgot-password
+- Body (raw, JSON):
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+*/
+
+// **Reset Password Example:**
+/*
+- Method: POST
+- URL: http://localhost:3000/auth/reset-password
+- Body (raw, JSON):
+  ```json
+  {
+    "token": "PASTE_TOKEN_FROM_EMAIL_HERE",
+    "newPassword": "YourNewPassword123"
+  }
+  ```
+*/
