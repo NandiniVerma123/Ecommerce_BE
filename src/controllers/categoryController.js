@@ -66,7 +66,7 @@ const deleteCategory = async (req, res) => {
   }
 };
 
-// Add a subcategory to a category
+// Add a subcategory
 const addSubcategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -84,7 +84,7 @@ const addSubcategory = async (req, res) => {
   }
 };
 
-// Remove a subcategory from a category
+// Remove a subcategory
 const removeSubcategory = async (req, res) => {
   try {
     const { id, subId } = req.params;

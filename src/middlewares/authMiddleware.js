@@ -13,18 +13,33 @@ const authenticate = async (req, res, next) => {
     });
   }
 
-  // Check if the token is blacklisted
-  if (blacklist.includes(token)) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid token.',
-    });
+  // Check if the token is blacklisted (with error handling)
+  try {
+    if (blacklist && blacklist.includes && blacklist.includes(token)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token.',
+      });
+    }
+  } catch (error) {
+    console.error('Blacklist check error:', error);
+    // Continue without blacklist check if there's an issue
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const decodedUser = decoded;
-    const user = await User.findById(decodedUser.id);
+    console.log('🔍 Decoded JWT:', decoded);
+    console.log('🔍 User ID from token:', decoded.id);
+    console.log('🔍 Token exp:', new Date(decoded.exp * 1000));
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+    
     req.user = user;
     next();
   } catch (err) {

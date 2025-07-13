@@ -1,4 +1,6 @@
 const express = require('express');
+const authenticate = require('../middlewares/authMiddleware'); // Add this import
+const { adminAuth } = require('../middlewares/roleBasedAuth');
 const {
   createCategory,
   getAllCategories,
@@ -8,27 +10,20 @@ const {
   addSubcategory,
   removeSubcategory
 } = require('../controllers/CategoryController');
+
 const router = express.Router();
 
-// Create a new category
-router.post('/createCategory', createCategory);
+// Apply authentication first, then role-based authorization
+router.use(authenticate);  // ✅ First authenticate and set req.user
+router.use(adminAuth);     // ✅ Then check if user has admin role
 
-// Get all categories
-router.get('/getAllCategories', getAllCategories);
-
-// Get a single category by id
-router.get('/getCategoryById/:id', getCategoryById);
-
-// Update a category by id
-router.put('/updateCategory/:id', updateCategory);
-
-// Delete a category by id
-router.delete('/deleteCategory/:id', deleteCategory);
-
-// Add a subcategory to a category
-router.post('/addSubcategory/:id', addSubcategory);
-
-// Remove a subcategory from a category
-router.delete('/removeSubcategory/:id/:subId', removeSubcategory);
+// Category endpoints
+router.get("/categories", getAllCategories);
+router.post("/categories", createCategory);
+router.get("/categories/:id", getCategoryById);
+router.put("/categories/:id", updateCategory);
+router.delete("/categories/:id", deleteCategory);
+router.post("/categories/:id/subcategories", addSubcategory);
+router.delete("/categories/:id/subcategories/:subId", removeSubcategory);
 
 module.exports = router;
