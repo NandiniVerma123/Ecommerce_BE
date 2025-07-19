@@ -53,6 +53,18 @@ const userSchema = new mongoose.Schema({
     enum: ["activate", "deactivate"],
     default: "activate"
   },
+
+  // ✅ Vendor-specific (optional) fields:
+  storeName: {
+    type: String,
+    default: null
+  },
+  gstNumber: {
+    type: String,
+    default: null
+  },
+
+  // Wishlist (customer feature)
   wishlist: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -63,6 +75,5 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-const User = mongoose.model('User', userSchema);
-
+const User = mongoose.model("User", userSchema);
 module.exports = User;

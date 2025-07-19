@@ -166,29 +166,3 @@ module.exports = {
   resetPassword
 };
 
-// To use the **forgot password** and **reset password** APIs in Postman, set the Body to **raw** and **JSON**.
-
-// **Forgot Password Example:**
-/*
-- Method: POST
-- URL: http://localhost:3000/auth/forgot-password
-- Body (raw, JSON):
-  ```json
-  {
-    "email": "user@example.com"
-  }
-  ```
-*/
-
-// **Reset Password Example:**
-/*
-- Method: POST
-- URL: http://localhost:3000/auth/reset-password
-- Body (raw, JSON):
-  ```json
-  {
-    "token": "PASTE_TOKEN_FROM_EMAIL_HERE",
-    "newPassword": "YourNewPassword123"
-  }
-  ```
-*/

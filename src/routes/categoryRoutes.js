@@ -18,12 +18,12 @@ router.use(authenticate);  // ✅ First authenticate and set req.user
 router.use(adminAuth);     // ✅ Then check if user has admin role
 
 // Category endpoints
-router.get("/categories", getAllCategories);
-router.post("/categories", createCategory);
-router.get("/categories/:id", getCategoryById);
-router.put("/categories/:id", updateCategory);
-router.delete("/categories/:id", deleteCategory);
-router.post("/categories/:id/subcategories", addSubcategory);
-router.delete("/categories/:id/subcategories/:subId", removeSubcategory);
+router.get("/getallcategories", getAllCategories);
+router.post("/create_categories", createCategory);
+router.get("/getcategory/:categoryId", getCategoryById);
+router.put("/updatecategory/:categoryId", updateCategory);
+router.delete("/deletecategory/:categoryId", deleteCategory);
+router.post("/addsubcategory/:categoryId", addSubcategory);
+router.delete("/removesubcategory/:categoryId/:subId", removeSubcategory);
 
 module.exports = router;
