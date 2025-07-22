@@ -126,7 +126,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-
 // Add new user — Admin only
 const addNewUser = async (req, res) => {
   try {
@@ -263,7 +262,6 @@ const getMyProfile = async (req, res) => {
   }
 };
 
-
 // Change password — logged-in user
 const changePassword = async (req, res) => {
   try {
@@ -293,6 +291,8 @@ const changePassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Toggle user status (activate/deactivate) — Admin only
 
 const toggleUserStatus = async (req, res) => {
   try {
@@ -343,7 +343,6 @@ const toggleUserStatus = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 
 module.exports = {

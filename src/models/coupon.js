@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const couponSchema = new mongoose.Schema({
     code: {
      type: String,
@@ -17,6 +19,10 @@ const couponSchema = new mongoose.Schema({
          type: Number,
          default: 0
     },
+    validFrom: {
+         type: Date,
+         default: Date.now
+    },
     expiresAt: {
          type: Date,
          required: true
@@ -24,6 +30,20 @@ const couponSchema = new mongoose.Schema({
     usageLimit: {
          type: Number,
          default: 1
+    },
+    maxDiscount: {
+         type: Number,
+         default: null
+    },
+    createdBy: {
+         type: mongoose.Schema.Types.ObjectId,    
+           ref: 'User',
+           required: true
+    },
+    createdRole : {
+           type: String,
+           enum: ['admin', 'vendor'],
+           required: true
     },
     usedBy: [{
          type: mongoose.Schema.Types.ObjectId,

@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
     orderId: {
         type: String,
-        required: true
     },
     email: {
         type: mongoose.Schema.Types.ObjectId,
@@ -22,13 +21,11 @@ const productSchema = new mongoose.Schema({
         enum: [
             'delivered paid',
             'shipped paid',
-            'cancelled refunded'
+            'cancelled refunded',
         ],
-        required: true
     },
     total: {
         type: Number,
-        required: true,
         min: 0
     },
 }, {

@@ -59,7 +59,18 @@ const orderSchema = new mongoose.Schema({
         zipCode: {
             type: String, required: true
         }
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['none', 'pending', 'approved', 'rejected'],
+        required: true
+    },
+    paymentStatus : {
+        type: String,
+        enum: ['unpaid', 'paid', 'refunded'],
+        default: 'pending'
     }
+
 
 }, { timestamps: true });
 
