@@ -9,7 +9,7 @@ const {
   deleteCategory,
   addSubcategory,
   removeSubcategory
-} = require('../controllers/CategoryController');
+} = require('../controllers/categoryController');
 
 const router = express.Router();
 

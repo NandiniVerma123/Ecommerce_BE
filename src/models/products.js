@@ -1,33 +1,60 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-    orderId: {
-        type: String,
-    },
-    email: {
-        type: mongoose.Schema.Types.ObjectId,
-         ref: 'User',
-    },
     productName: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    description: {
         type: String,
         required: true
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
+        required: true
     },
-    status: {
-        type: String,
-        enum: [
-            'delivered paid',
-            'shipped paid',
-            'cancelled refunded',
-        ],
+    productImage: {
+        type: [String], // store multiple image URLs if needed
+        required: true
     },
-    total: {
+    pricing: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    originalPricing: {
         type: Number,
         min: 0
     },
+    inventory: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    stockQuantity: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'out of stock'],
+        default: 'active'
+    },
+    // Optional fields
+    sku: {
+        type: String,
+        unique: true,
+        trim: true
+    },
+    brand: {
+        type: String
+    },
+    tags: {
+        type: [String]
+    }
 }, {
     timestamps: true
 });

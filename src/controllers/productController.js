@@ -3,21 +3,41 @@ const Product = require("../models/products");
 // Add a new product
 const addProduct = async (req, res) => {
   try {
-    const { productName, category, total } = req.body;
+    const {
+      productName,
+      description,
+      category,
+      productImage,
+      pricing,
+      originalPricing,
+      inventory,
+      stockQuantity,
+      sku,
+      brand,
+      tags
+    } = req.body;
 
     // Validate required fields
-    if (!productName || !total) {
+    if (!productName || !description || !category || !productImage || !pricing || inventory == null || stockQuantity == null) {
       return res.status(400).json({
         success: false,
-        message: "productName and total are required."
+        message: "Missing required fields: productName, description, category, productImage, pricing, inventory, stockQuantity."
       });
     }
 
-    // Create and save product
     const product = new Product({
       productName: productName.trim(),
+      description,
       category,
-      total
+      productImage: Array.isArray(productImage) ? productImage : [productImage],
+      pricing,
+      originalPricing,
+      inventory,
+      stockQuantity,
+      sku,
+      brand,
+      tags,
+      createdBy: req.user._id
     });
 
     await product.save();
@@ -25,12 +45,7 @@ const addProduct = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Product added successfully.",
-      product: {
-        _id: product._id,
-        productName: product.productName,
-        category: product.category,
-        total: product.total
-      }
+      product
     });
 
   } catch (error) {
@@ -43,51 +58,36 @@ const addProduct = async (req, res) => {
   }
 };
 
-
-// Delete a product by ID
+// Delete product
 const deleteProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { userId, role } = req.query;
+    const productId = req.params.id;
 
-    if (!userId || !role) {
-      return res.status(400).json({ success: false, message: "User ID and role are required." });
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    if (product.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Cannot delete this product' });
     }
 
-    const product = await Product.findById(id);
-    if (!product) {
-      return res.status(205).json({ success: false, message: "Product not found." });
-    }
+    await Product.findByIdAndDelete(productId);
+    res.status(200).json({ success: true, message: 'Product deleted successfully' });
 
-    const isOwner = product.createdBy?.toString() === userId;
-
-    if (role !== "admin" && !isOwner) {
-      return res.status(403).json({ success: false, message: "Access denied." });
-    }
-
-    await Product.findByIdAndDelete(id);
-    return res.status(200).json({ success: true, message: "Product deleted successfully." });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Update a product by ID
+// Update product
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, role } = req.query;
-
-    if (!userId || !role) {
-      return res.status(400).json({ success: false, message: "User ID and role are required." });
-    }
 
     const product = await Product.findById(id);
-    if (!product) {
-      return res.status(205).json({ success: false, message: "Product not found." });
-    }
+    if (!product) return res.status(404).json({ success: false, message: "Product not found." });
 
-    const isOwner = product.createdBy?.toString() === userId;
+    const isOwner = product.createdBy?.toString() === req.user.id;
+    const role = req.user?.role;
 
     if (role !== "admin" && !isOwner) {
       return res.status(403).json({ success: false, message: "Access denied." });
@@ -118,7 +118,7 @@ const getAllProducts = async (req, res) => {
     const total = await Product.countDocuments({});
 
     if (products.length === 0) {
-      return res.status(205).json({ success: false, message: "No products found." });
+      return res.status(204).json({ success: false, message: "No products found." });
     }
 
     return res.status(200).json({
@@ -136,40 +136,42 @@ const getAllProducts = async (req, res) => {
   }
 };
 
+// Get product by ID
 const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found." });
-    }
+    const product = await Product.findById(id).populate("category");
+    if (!product) return res.status(404).json({ success: false, message: "Product not found." });
+
     return res.status(200).json({ success: true, product });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// Get products by category
 const getProductsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-
     const products = await Product.find({ category: categoryId });
     if (products.length === 0) {
       return res.status(204).json({ success: false, message: "No products found for this category." });
     }
-
     return res.status(200).json({ success: true, products });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// Search products
 const searchProducts = async (req, res) => {
   try {
     const { keyword } = req.query;
     if (!keyword) return res.status(400).json({ success: false, message: "Keyword is required" });
 
-    const products = await Product.find({ name: { $regex: keyword, $options: "i" } });
+    const products = await Product.find({
+      productName: { $regex: keyword, $options: "i" }
+    });
 
     return res.status(200).json({ success: true, products });
   } catch (error) {
@@ -177,15 +179,15 @@ const searchProducts = async (req, res) => {
   }
 };
 
+// Filter products
 const filterProducts = async (req, res) => {
   try {
-    const { minPrice, maxPrice, rating, available } = req.query;
+    const { minPrice, maxPrice, available } = req.query;
     const filter = {};
 
-    if (minPrice) filter.price = { ...filter.price, $gte: parseFloat(minPrice) };
-    if (maxPrice) filter.price = { ...filter.price, $lte: parseFloat(maxPrice) };
-    if (rating) filter.rating = { $gte: parseFloat(rating) };
-    if (available) filter.stock = { $gt: 0 };
+    if (minPrice) filter.pricing = { ...filter.pricing, $gte: parseFloat(minPrice) };
+    if (maxPrice) filter.pricing = { ...filter.pricing, $lte: parseFloat(maxPrice) };
+    if (available) filter.stockQuantity = { $gt: 0 };
 
     const products = await Product.find(filter);
     return res.status(200).json({ success: true, products });
@@ -194,6 +196,7 @@ const filterProducts = async (req, res) => {
   }
 };
 
+// Upload product image
 const uploadProductImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -207,14 +210,12 @@ const uploadProductImage = async (req, res) => {
   }
 };
 
-
+// Toggle product status
 const toggleProductStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found." });
-    }
+    if (!product) return res.status(404).json({ success: false, message: "Product not found." });
 
     product.status = product.status === "active" ? "inactive" : "active";
     await product.save();
@@ -225,11 +226,10 @@ const toggleProductStatus = async (req, res) => {
   }
 };
 
+// Get my products
 const getMyProducts = async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ success: false, message: "User ID is required" });
-
+    const userId = req.user._id;
     const products = await Product.find({ createdBy: userId });
 
     return res.status(200).json({ success: true, products });
@@ -237,8 +237,6 @@ const getMyProducts = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
 
 module.exports = {
   addProduct,

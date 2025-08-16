@@ -6,6 +6,7 @@ const authRoutes = require('./src/routes/authRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const vendorRoutes = require('./src/routes/VendorRoutes');
+const customerRoutes = require('./src/routes/CustomerRoutes');
 
 // Load env variables
 dotenv.config();
@@ -44,6 +45,7 @@ app.use('/auth', authRoutes);      // No auth needed
 app.use('/user', userRoutes);      // Auth handled in route file
 app.use('/admin', adminRoutes);    // Auth handled in route file
 app.use('/vendor', vendorRoutes);  // Auth handled in route file
+app.use('/customer', customerRoutes); // Auth handled in route file
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server is running on port ${process.env.PORT || 3000}`);

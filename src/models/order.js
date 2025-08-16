@@ -35,8 +35,8 @@ const orderSchema = new mongoose.Schema({
     },
     paymentStatus: {
         type: String,
-        enum: ['unpaid', 'paid', 'refunded'],
-        default: 'unpaid'
+        enum: ["pending", "paid", "failed", "refunded"], // notice capital P if you want
+        default: "pending"
     },
     totalAmount: {
         type: Number,
@@ -65,11 +65,6 @@ const orderSchema = new mongoose.Schema({
         enum: ['none', 'pending', 'approved', 'rejected'],
         required: true
     },
-    paymentStatus : {
-        type: String,
-        enum: ['unpaid', 'paid', 'refunded'],
-        default: 'pending'
-    }
 
 
 }, { timestamps: true });

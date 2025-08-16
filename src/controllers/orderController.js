@@ -3,55 +3,71 @@ const Order = require("../models/order");
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    const { userId, products, total, address, status = "pending" } = req.body;
+    const { products, totalAmount, shippingAddress, status = "pending", paymentMethod } = req.body;
 
-    if (!userId) return res.status(400).json({ message: "User ID is required" });
+    if (!products || products.length === 0) {
+      return res.status(400).json({ message: "Products are required" });
+    }
 
-    const order = new Order({ user: userId, products, total, address, status });
+    if (!totalAmount) {
+      return res.status(400).json({ message: "Total amount is required" });
+    }
+
+    if (!shippingAddress) {
+      return res.status(400).json({ message: "Shipping address is required" });
+    }
+
+    const order = new Order({
+      orderId: `ORD-${Date.now()}`, // simple auto-generated ID
+      email: req.user._id, // matches your schema's "email" ref to User
+      products,
+      totalAmount,
+      shippingAddress,
+      paymentMethod,
+      status
+    });
+
     await order.save();
-
-    res.status(201).json({ message: "Order created", order });
+    res.status(201).json({ message: "Order created successfully", order });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get all orders
+
+// Get all orders (middleware already ensures admin/vendor/etc. access)
 const getAllOrders = async (req, res) => {
   try {
-    const { role } = req.query;
-    if (role !== "admin") return res.status(403).json({ message: "Access denied" });
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .populate("products.product");
 
-    const orders = await Order.find().populate("user").populate("products.product");
     res.status(200).json({ orders });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get orders by user
-const getOrdersByUser = async (req, res) => {
+// Get orders by logged-in user
+const getMyOrders = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const orders = await Order.find({ user: userId }).populate("products.product");
+    const orders = await Order.find({ user: req.user._id })
+      .populate("products.product");
+
     res.status(200).json({ orders });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get single order by ID
+// Get single order by ID (access controlled by middleware)
 const getOrderById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { userId, role } = req.query;
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("products.product");
 
-    const order = await Order.findById(id).populate("user").populate("products.product");
     if (!order) return res.status(404).json({ message: "Order not found" });
-
-    if (role !== "admin" && order.user.toString() !== userId) {
-      return res.status(403).json({ message: "Access denied" });
-    }
 
     res.status(200).json({ order });
   } catch (err) {
@@ -62,13 +78,9 @@ const getOrderById = async (req, res) => {
 // Update order status
 const updateOrderStatus = async (req, res) => {
   try {
-    const { role } = req.query;
-    const { id } = req.params;
     const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
 
-    if (role !== "admin") return res.status(403).json({ message: "Access denied" });
-
-    const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     res.status(200).json({ message: "Order status updated", order });
@@ -80,12 +92,7 @@ const updateOrderStatus = async (req, res) => {
 // Delete order
 const deleteOrder = async (req, res) => {
   try {
-    const { role } = req.query;
-    const { id } = req.params;
-
-    if (role !== "admin") return res.status(403).json({ message: "Access denied" });
-
-    const deleted = await Order.findByIdAndDelete(id);
+    const deleted = await Order.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Order not found" });
 
     res.status(200).json({ message: "Order deleted" });
@@ -97,14 +104,12 @@ const deleteOrder = async (req, res) => {
 // Mark order delivered
 const markOrderDelivered = async (req, res) => {
   try {
-    const { role } = req.query;
-    const { id } = req.params;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: "delivered" },
+      { new: true }
+    );
 
-    if (role !== "admin" && role !== "vendor") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const order = await Order.findByIdAndUpdate(id, { status: "delivered" }, { new: true });
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     res.status(200).json({ message: "Order marked as delivered", order });
@@ -113,11 +118,10 @@ const markOrderDelivered = async (req, res) => {
   }
 };
 
-// Export controllers
 module.exports = {
   createOrder,
   getAllOrders,
-  getOrdersByUser,
+  getMyOrders,
   getOrderById,
   updateOrderStatus,
   deleteOrder,

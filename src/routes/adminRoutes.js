@@ -33,7 +33,6 @@ const {
 
 const {
   getAllOrders,
-  getOrdersByUser,
   getOrderById,
   updateOrderStatus,
   deleteOrder,
@@ -82,7 +81,6 @@ router.post("/upsertCoupon", upsertCoupon); // Create or update a coupon
 
 // ---------------- Order Management Routes ----------------
 router.get("/getAllOrders", getAllOrders); // ?page=1&limit=
-router.get("/getOrdersByUser", getOrdersByUser); // ?userId=...
 router.get("/getOrderById/:id", getOrderById);
 router.put("/updateOrderStatus/:id", updateOrderStatus); // ?role=admin
 router.delete("/deleteOrder/:id", deleteOrder); // ?role=admin
